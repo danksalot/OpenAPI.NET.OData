@@ -178,6 +178,46 @@ namespace Microsoft.OpenApi.OData.Generator
             return properties;
         }
 
+        /// <summary>
+        /// Create a map of string/<see cref="OpenApiSchema"/> map for a <see cref="IEdmStructuredType"/>'s all properties.
+        /// </summary>
+        /// <param name="context">The OData context.</param>
+        /// <param name="structuredType">The Edm structured type.</param>
+        /// <returns>The created map of <see cref="OpenApiSchema"/>.</returns>
+        public static IDictionary<string, OpenApiSchema> CreateStructuredTypeCombinedPropertiesSchema(this ODataContext context, IEdmStructuredType structuredType)
+        {
+            Utils.CheckArgumentNull(context, nameof(context));
+            Utils.CheckArgumentNull(structuredType, nameof(structuredType));
+
+            // The name is the property name, the value is a Schema Object describing the allowed values of the property.
+            IDictionary<string, OpenApiSchema> properties = new Dictionary<string, OpenApiSchema>();
+
+            // structure properties
+            foreach (var property in structuredType.StructuralProperties())
+            {
+                // OpenApiSchema propertySchema = property.Type.CreateSchema();
+                // propertySchema.Default = property.DefaultValueString != null ? new OpenApiString(property.DefaultValueString) : null;
+                if (property.Type.FullName() != structuredType.FullTypeName() &&
+                    property.Type.FullName() != $"Collection({structuredType.FullTypeName()})")
+                {
+                    properties.Add(property.Name, context.CreatePropertySchema(property));
+                }
+            }
+
+            // navigation properties
+            foreach (var property in structuredType.NavigationProperties())
+            {
+                if (property.Type.FullName() != structuredType.FullTypeName() &&
+                    property.Type.FullName() != $"Collection({structuredType.FullTypeName()})")
+                {
+                    OpenApiSchema propertySchema = context.CreateEdmTypeSchema(property.Type);
+                    properties.Add(property.Name, propertySchema);
+                }
+            }
+
+            return properties;
+        }
+
         public static OpenApiSchema CreateSchemaTypeDefinitionSchema(this ODataContext context, IEdmTypeDefinition typeDefinition)
         {
             return context.CreateSchema(typeDefinition.UnderlyingType);
@@ -211,73 +251,44 @@ namespace Microsoft.OpenApi.OData.Generator
             Debug.Assert(context != null);
             Debug.Assert(structuredType != null);
 
-            if (processBase && structuredType.BaseType != null)
+            // A structured type without a base type is represented as a Schema Object of type object
+            OpenApiSchema schema = new OpenApiSchema
             {
-                // A structured type with a base type is represented as a Schema Object
-                // that contains the keyword allOf whose value is an array with two items:
-                return new OpenApiSchema
-                {
-                    AllOf = new List<OpenApiSchema>
-                    {
-                        // 1. a JSON Reference to the Schema Object of the base type
-                        new OpenApiSchema
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.Schema,
-                                Id = structuredType.BaseType.FullTypeName()
-                            }
-                        },
+                Title = (structuredType as IEdmSchemaElement)?.Name,
 
-                        // 2. a Schema Object describing the derived type
-                        context.CreateStructuredTypeSchema(structuredType, false, false)
-                    },
+                Type = "object",
 
-                    AnyOf = null,
-                    OneOf = null,
-                    Properties = null,
-                    Example = CreateStructuredTypePropertiesExample(context, structuredType)
-                };
-            }
-            else
+                // Each structural property and navigation property is represented
+                // as a name/value pair of the standard OpenAPI properties object.
+                // Add properties from referenced types instead of using AllOf
+                // because AllOf is not supported by PowerApps
+                Properties = context.CreateStructuredTypeCombinedPropertiesSchema(structuredType),
+
+                // make others null
+                AllOf = null,
+                OneOf = null,
+                AnyOf = null
+            };
+
+            // It optionally can contain the field description,
+            // whose value is the value of the unqualified annotation Core.Description of the structured type.
+            if (structuredType.TypeKind == EdmTypeKind.Complex)
             {
-                // A structured type without a base type is represented as a Schema Object of type object
-                OpenApiSchema schema = new OpenApiSchema
-                {
-                    Title = (structuredType as IEdmSchemaElement)?.Name,
-
-                    Type = "object",
-
-                    // Each structural property and navigation property is represented
-                    // as a name/value pair of the standard OpenAPI properties object.
-                    Properties = context.CreateStructuredTypePropertiesSchema(structuredType),
-
-                    // make others null
-                    AllOf = null,
-                    OneOf = null,
-                    AnyOf = null
-                };
-
-                // It optionally can contain the field description,
-                // whose value is the value of the unqualified annotation Core.Description of the structured type.
-                if (structuredType.TypeKind == EdmTypeKind.Complex)
-                {
-                    IEdmComplexType complex = (IEdmComplexType)structuredType;
-                    schema.Description = context.Model.GetDescriptionAnnotation(complex);
-                }
-                else if (structuredType.TypeKind == EdmTypeKind.Entity)
-                {
-                    IEdmEntityType entity = (IEdmEntityType)structuredType;
-                    schema.Description = context.Model.GetDescriptionAnnotation(entity);
-                }
-
-                if (processExample)
-                {
-                    schema.Example = CreateStructuredTypePropertiesExample(context, structuredType);
-                }
-
-                return schema;
+                IEdmComplexType complex = (IEdmComplexType)structuredType;
+                schema.Description = context.Model.GetDescriptionAnnotation(complex);
             }
+            else if (structuredType.TypeKind == EdmTypeKind.Entity)
+            {
+                IEdmEntityType entity = (IEdmEntityType)structuredType;
+                schema.Description = context.Model.GetDescriptionAnnotation(entity);
+            }
+
+            if (processExample)
+            {
+                schema.Example = CreateStructuredTypePropertiesExample(context, structuredType);
+            }
+
+            return schema;
         }
 
         private static IOpenApiAny CreateStructuredTypePropertiesExample(ODataContext context, IEdmStructuredType structuredType)
@@ -289,28 +300,33 @@ namespace Microsoft.OpenApi.OData.Generator
             // properties
             foreach (var property in structuredType.Properties())
             {
-               // IOpenApiAny item;
-                IEdmTypeReference propertyType = property.Type;
-
-                IOpenApiAny item = GetTypeNameForExample(context, propertyType);
-
-                EdmTypeKind typeKind = propertyType.TypeKind();
-                if (typeKind == EdmTypeKind.Primitive && item is OpenApiString)
+                // Remove properties of the same type as they are not supported by PowerApps
+                if (property.Type.FullName() != structuredType.FullTypeName() &&
+                    property.Type.FullName() != $"Collection({structuredType.FullTypeName()})")
                 {
-                    OpenApiString stringAny = item as OpenApiString;
-                    string value = stringAny.Value;
-                    if (entityType != null && entityType.Key().Any(k => k.Name == property.Name))
-                    {
-                        value += " (identifier)";
-                    }
-                    if (propertyType.IsDateTimeOffset() || propertyType.IsDate() || propertyType.IsTimeOfDay())
-                    {
-                        value += " (timestamp)";
-                    }
-                    item = new OpenApiString(value);
-                }
+                    // IOpenApiAny item;
+                    IEdmTypeReference propertyType = property.Type;
 
-                example.Add(property.Name, item);
+                    IOpenApiAny item = GetTypeNameForExample(context, propertyType);
+
+                    EdmTypeKind typeKind = propertyType.TypeKind();
+                    if (typeKind == EdmTypeKind.Primitive && item is OpenApiString)
+                    {
+                        OpenApiString stringAny = item as OpenApiString;
+                        string value = stringAny.Value;
+                        if (entityType != null && entityType.Key().Any(k => k.Name == property.Name))
+                        {
+                            value += " (identifier)";
+                        }
+                        if (propertyType.IsDateTimeOffset() || propertyType.IsDate() || propertyType.IsTimeOfDay())
+                        {
+                            value += " (timestamp)";
+                        }
+                        item = new OpenApiString(value);
+                    }
+
+                    example.Add(property.Name, item);
+                }
             }
 
             return example;

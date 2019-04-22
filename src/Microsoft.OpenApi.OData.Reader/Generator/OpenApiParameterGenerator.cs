@@ -359,13 +359,9 @@ namespace Microsoft.OpenApi.OData.Generator
                 Description = "Order items by property values",
                 Schema = new OpenApiSchema
                 {
-                    Type = "array",
-                    UniqueItems = true,
-                    Items = new OpenApiSchema
-                    {
-                        Type = "string",
-                        Enum = orderByItems
-                    }
+                    // Remove array in favor of single instance for PowerApps
+                    Type = "string",
+                    Enum = orderByItems
                 },
                 Style = ParameterStyle.Simple
             };
@@ -437,13 +433,9 @@ namespace Microsoft.OpenApi.OData.Generator
                 Description = "Select properties to be returned",
                 Schema = new OpenApiSchema
                 {
-                    Type = "array",
-                    UniqueItems = true,
-                    Items = new OpenApiSchema
-                    {
-                        Type = "string",
-                        Enum = selectItems
-                    }
+                    // Remove array in favor of single instance for PowerApps
+                    Type = "string",
+                    Enum = selectItems
                 },
                 Style = ParameterStyle.Simple
             };
@@ -514,13 +506,9 @@ namespace Microsoft.OpenApi.OData.Generator
                 Description = "Expand related entities",
                 Schema = new OpenApiSchema
                 {
-                    Type = "array",
-                    UniqueItems = true,
-                    Items = new OpenApiSchema
-                    {
-                        Type = "string",
-                        Enum = expandItems
-                    }
+                    // Remove array in favor of single instance for PowerApps
+                    Type = "string",
+                    Enum = expandItems
                 },
                 Style = ParameterStyle.Simple
             };

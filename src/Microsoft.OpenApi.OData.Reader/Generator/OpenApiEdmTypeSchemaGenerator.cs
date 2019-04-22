@@ -182,37 +182,51 @@ namespace Microsoft.OpenApi.OData.Generator
                     schema.Format = "decimal";
                     break;
                 case EdmPrimitiveTypeKind.Double: // double
-                    schema.AnyOf = new List<OpenApiSchema>
+                    if (context.Settings.IEEE754Compatible)
                     {
-                        new OpenApiSchema { Type = "number" },
-                        new OpenApiSchema { Type = "string" },
-                        new OpenApiSchema
+                        schema.AnyOf = new List<OpenApiSchema>
                         {
-                            Enum = new List<IOpenApiAny>
+                            new OpenApiSchema { Type = "number" },
+                            new OpenApiSchema { Type = "string" },
+                            new OpenApiSchema
                             {
-                                new OpenApiString("-INF"),
-                                new OpenApiString("INF"),
-                                new OpenApiString("NaN")
+                                Enum = new List<IOpenApiAny>
+                                {
+                                    new OpenApiString("-INF"),
+                                    new OpenApiString("INF"),
+                                    new OpenApiString("NaN")
+                                }
                             }
-                        }
-                    };
+                        };
+                    }
+                    else
+                    {
+                        schema.Type = "number";
+                    }
                     schema.Format = "double";
                     break;
                 case EdmPrimitiveTypeKind.Single: // single
-                    schema.AnyOf = new List<OpenApiSchema>
+                    if (context.Settings.IEEE754Compatible)
                     {
-                        new OpenApiSchema { Type = "number" },
-                        new OpenApiSchema { Type = "string" },
-                        new OpenApiSchema
+                        schema.AnyOf = new List<OpenApiSchema>
                         {
-                            Enum = new List<IOpenApiAny>
+                            new OpenApiSchema { Type = "number" },
+                            new OpenApiSchema { Type = "string" },
+                            new OpenApiSchema
                             {
-                                new OpenApiString("-INF"),
-                                new OpenApiString("INF"),
-                                new OpenApiString("NaN")
+                                Enum = new List<IOpenApiAny>
+                                {
+                                    new OpenApiString("-INF"),
+                                    new OpenApiString("INF"),
+                                    new OpenApiString("NaN")
+                                }
                             }
-                        }
-                    };
+                        };
+                    }
+                    else
+                    {
+                        schema.Type = "number";
+                    }                    
                     schema.Format = "float";
                     break;
                 case EdmPrimitiveTypeKind.Guid: // guid
@@ -406,17 +420,11 @@ namespace Microsoft.OpenApi.OData.Generator
 
             OpenApiSchema schema = new OpenApiSchema();
             schema.Nullable = typeReference.IsNullable;
-            schema.Reference = null;
-            schema.AnyOf = new List<OpenApiSchema>
+            schema.AnyOf = null;
+            schema.Reference = new OpenApiReference
             {
-                new OpenApiSchema
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.Schema,
-                        Id = typeReference.Definition.FullTypeName()
-                    }
-                }
+                Type = ReferenceType.Schema,
+                Id = typeReference.Definition.FullTypeName()
             };
 
             return schema;
@@ -428,32 +436,13 @@ namespace Microsoft.OpenApi.OData.Generator
             Debug.Assert(typeReference != null);
 
             OpenApiSchema schema = new OpenApiSchema();
-            if (typeReference.IsNullable)
+            schema.Type = null;
+            schema.AnyOf = null;
+            schema.Reference = new OpenApiReference
             {
-                schema.Nullable = true;
-                schema.Reference = null;
-                schema.AnyOf = new List<OpenApiSchema>
-                {
-                    new OpenApiSchema
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.Schema,
-                            Id = typeReference.Definition.FullTypeName()
-                        }
-                    }
-                };
-            }
-            else
-            {
-                schema.Type = null;
-                schema.AnyOf = null;
-                schema.Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.Schema,
-                    Id = typeReference.Definition.FullTypeName()
-                };
-            }
+                Type = ReferenceType.Schema,
+                Id = typeReference.Definition.FullTypeName()
+            };
 
             return schema;
         }
@@ -465,17 +454,11 @@ namespace Microsoft.OpenApi.OData.Generator
 
             OpenApiSchema schema = new OpenApiSchema();
             schema.Nullable = reference.IsNullable;
-            schema.Reference = null;
-            schema.AnyOf = new List<OpenApiSchema>
+            schema.AnyOf = null;
+            schema.Reference = new OpenApiReference
             {
-                new OpenApiSchema
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.Schema,
-                        Id = reference.Definition.FullTypeName()
-                    }
-                }
+                Type = ReferenceType.Schema,
+                Id = reference.Definition.FullTypeName()
             };
 
             return schema;

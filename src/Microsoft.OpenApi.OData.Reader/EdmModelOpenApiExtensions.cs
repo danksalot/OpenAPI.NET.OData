@@ -40,21 +40,21 @@ namespace Microsoft.OpenApi.OData
             Utils.CheckArgumentNull(model, nameof(model));
             Utils.CheckArgumentNull(settings, nameof(settings));
 
-            if (settings.VerifyEdmModel)
-            {
-                IEnumerable<EdmError> errors;
-                if (!model.Validate(out errors))
-                {
-                    OpenApiDocument document = new OpenApiDocument();
-                    int index = 1;
-                    foreach (var error in errors)
-                    {
-                        document.Extensions.Add(Constants.xMsEdmModelError + index++, new OpenApiString(error.ToString()));
-                    }
+            //if (settings.VerifyEdmModel)
+            //{
+            //    IEnumerable<EdmError> errors;
+            //    if (!model.Validate(out errors))
+            //    {
+            //        OpenApiDocument document = new OpenApiDocument();
+            //        int index = 1;
+            //        foreach (var error in errors)
+            //        {
+            //            document.Extensions.Add(Constants.xMsEdmModelError + index++, new OpenApiString(error.ToString()));
+            //        }
 
-                    return document;
-                }
-            }
+            //        return document;
+            //    }
+            //}
 
             ODataContext context = new ODataContext(model, settings);
             return context.CreateDocument();

@@ -263,6 +263,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("LineString")
@@ -298,6 +299,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("Polygon")
@@ -337,6 +339,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("MultiPoint")
@@ -371,6 +374,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("MultiLineString")
@@ -410,6 +414,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("MultiPolygon")
@@ -453,6 +458,7 @@ namespace Microsoft.OpenApi.OData.Generator
                 {
                     { "type", new OpenApiSchema
                         {
+                            Type = "string",
                             Enum = new List<IOpenApiAny>
                             {
                                 new OpenApiString("GeometryCollection")
