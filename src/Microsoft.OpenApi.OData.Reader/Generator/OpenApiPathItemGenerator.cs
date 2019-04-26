@@ -41,6 +41,16 @@ namespace Microsoft.OpenApi.OData.Generator
                     continue;
                 }
 
+                // Assign key index to each key in the path
+                int keyCounter = 0;
+                foreach (var segment in path.Segments)
+                {
+                    if (segment.Kind == ODataSegmentKind.Key && (settings.EnableKeyAsSegment == null || !settings.EnableKeyAsSegment.Value))
+                    {
+                        segment.KeyIndex = keyCounter++;
+                    }
+                }
+
                 pathItems.Add(path.GetPathItemName(settings), handler.CreatePathItem(context, path));
             }
 

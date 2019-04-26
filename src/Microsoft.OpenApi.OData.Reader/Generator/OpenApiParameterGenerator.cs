@@ -127,10 +127,10 @@ namespace Microsoft.OpenApi.OData.Generator
             IList<IEdmStructuralProperty> keys = entityType.Key().ToList();
             if (keys.Count() == 1)
             {
-                string keyName = keys.First().Name;
+                string keyName = keys.First().Name + keySegment.KeyIndex.ToString();
                 if (context.Settings.PrefixEntityTypeNameBeforeKey)
                 {
-                    keyName = entityType.Name + "-" + keys.First().Name;
+                    keyName = entityType.Name + "-" + keyName;
                 }
 
                 OpenApiParameter parameter = new OpenApiParameter
@@ -150,12 +150,14 @@ namespace Microsoft.OpenApi.OData.Generator
                 // append key parameter
                 foreach (var keyProperty in entityType.Key())
                 {
+                    string keyName = keyProperty.Name + keySegment.KeyIndex.ToString();
+
                     OpenApiParameter parameter = new OpenApiParameter
                     {
-                        Name = keyProperty.Name,
+                        Name = keyName,
                         In = ParameterLocation.Path,
                         Required = true,
-                        Description = "key: " + keyProperty.Name,
+                        Description = "key: " + keyName,
                         Schema = context.CreateEdmTypeSchema(keyProperty.Type)
                     };
 

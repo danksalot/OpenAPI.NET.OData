@@ -39,7 +39,7 @@ namespace Microsoft.OpenApi.OData.Edm
                 IList<string> keys = new List<string>();
                 foreach (var key in EntityType.Key())
                 {
-                    keys.Add(key.Name);
+                    keys.Add(key.Name + KeyIndex.ToString());
                 }
 
                 return String.Join(",", keys);
@@ -58,11 +58,11 @@ namespace Microsoft.OpenApi.OData.Edm
 
                 if (settings.PrefixEntityTypeNameBeforeKey)
                 {
-                    return "{" + EntityType.Name + "-" + keyName + "}";
+                    return "{" + EntityType.Name + "-" + keyName + KeyIndex.ToString() + "}";
                 }
                 else
                 {
-                    return "{" + keyName + "}";
+                    return "{" + keyName + KeyIndex.ToString() + "}";
                 }
             }
             else
@@ -70,7 +70,7 @@ namespace Microsoft.OpenApi.OData.Edm
                 IList<string> keyStrings = new List<string>();
                 foreach (var keyProperty in keys)
                 {
-                    keyStrings.Add(keyProperty.Name + "={" + keyProperty.Name + "}");
+                    keyStrings.Add(keyProperty.Name + "={" + keyProperty.Name + KeyIndex.ToString() + "}");
                 }
 
                 return String.Join(",", keyStrings);

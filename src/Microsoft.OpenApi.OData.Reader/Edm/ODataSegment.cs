@@ -50,6 +50,11 @@ namespace Microsoft.OpenApi.OData.Edm
     public abstract class ODataSegment
     {
         /// <summary>
+        /// Index of key segment within Path.
+        /// </summary>
+        public int KeyIndex { get; set; }
+
+        /// <summary>
         /// Gets the entity type of current segment.
         /// </summary>
         public virtual IEdmEntityType EntityType => throw new NotImplementedException();
